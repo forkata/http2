@@ -70,9 +70,17 @@
 						<script type="text/template">
 							#### Head of line (HOL) blocking
 							* responses have to be returned in the same order (FIFO)
-							* http pipelining is not turned on for most clients (Opera)
+							* http pipelining is not turned on for some clients (Opera)
+							* large or slow response can still block others behind it
 						</script>
 					</section>
+
+					<section data-background-color="#fff" data-markdown>
+						<script type="text/template">
+							![](https://forkata.github.io/http2/images/pipelining2.png)
+						</script>
+					</section>
+
 					<section data-markdown>
 						<script type="text/template">
 							![](https://forkata.github.io/http2/images/gophertiles.png)
@@ -84,7 +92,7 @@
 				<section>
 					<section data-markdown>
 						<script type="text/template">
-							### Overcomming some of the inadequacies
+							## Overcomming some of the inadequacies
 						</script>
 					</section>
 					<section data-markdown>
@@ -92,46 +100,56 @@
 							### Spriting
 							* always transfer the full file
 							* caching purges all at once vs. letting most common ones remain
+
+							![](http://i.imgur.com/j8MGqYa.png)
 						</script>
 					</section>
 					<section data-markdown>
 						<script type="text/template">
 							### Inlining
-							* data urls
+							* size limits
+							* can't be cached
+
+							```
+							<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAA
+							          AAAAAACH5BAAAAAAALAAAAAABAAEAAAICTAEAOw=="
+									 alt="1x1 transparent (GIF) pixel" />
+							```
 						</script>
 					</section>
 					<section data-markdown>
 						<script type="text/template">
 							### Concatenation
-							* the Rails way (application.js/application.css)
+							* small changes expire whole file from cache
+							* serving _all_ our js/css on every page
 						</script>
 					</section>
 					<section data-markdown>
 						<script type="text/template">
 							### Sharding
 							* HTTP/1.1 limits server requests to 2 (limit removed, today 6-8 per host)
-							* new hostnames
+							* new hostnames _{shard1, shardn}.example.com_
 							* not unusual to use up to 100 connections for a single page
-							* top 300K sites use ~38 tcp connections and raising
-							* different hostnames - no cookies - smaller HTTP requests
+							* top 300K sites use 38 TCP connections
+							* different hostnames mean extra DNS lookups, no cookies, a lot of smaller HTTP requests
 						</script>
 					</section>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
-						## What should a better HTTP be?
+						## What would a better HTTP be?
 						* less RTT sensitive
 						* fix pipelining and HOL blocking
 						* don't encourage increased number of TCP connections
-						* keep existing URI formats
+						* keep existing URI formats (i.e. don't break the web)
 						* some transition path - HTTP/1.x servers/clients have to be able to proxy
 					</script>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
-						## SPDY
+						## SPDY/2 (2012)
 						* made by Google
 						* open, but they pretty much wrote and implemented
 						* SPDY/3 became draft 0 of HTTP/2
@@ -151,25 +169,25 @@
 						* HTTP/1.1 defined a way 'Upgrade' header in response from server
 						* cost of that is a round trip though
 						* SPDY didn't accept that and since it was only over TLS,
-							they added an extension to TLS called NPN (next protocol negotiation)
-							* server tells the client which protocols it knows and the client chooses
+							they added an extension to TLS called NPN (Next Protocol Negotiation)
+							* server tells the client which protocols it knows and the client chooses what to use
 					</script>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
-						## HTTP/2 for https
+						## HTTP/2 over https
 						* SPDY is only over TLS
-						* HTTP/2 supports plain text but Mozilla and Chrome will support only TLS
+						* HTTP/2 supports plain text (h2c) but Mozilla and Chrome will support only TLS
 						* NPN was not a standard so ALPN came about (Application Layer Protocol Negotiation)
 							* client tells the server list of protocols in order of precedence
-							* most servers/clients implement both
+							* most servers/clients implement both NPN and ALPN
 					</script>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
-						## HTTP/2 for http
+						## HTTP/2 over http
 						* client sends `Upgrade` header
 						* server responds with `101 Switching` status
 						* still a round trip loss
@@ -210,7 +228,7 @@
 
 				<section data-markdown>
 					<script type="text/template">
-						## So whats new?
+						## So whats actually new?
 					</script>
 				</section>
 
@@ -218,10 +236,15 @@
 					<script type="text/template">
 						## Binary!
 						* makes framing much easier - no optional white spaces!
-						* also TLS already diminishes the value of text
+						* TLS already diminishes the value of plain text
 						* HTTP/2 sends binary frames
-							* all have type, length, flags and a stream identifyer
-						!()[https://forkata.github.io/http2/images/binary_framing.svg]
+							* all have type, length, flags and a stream identifier
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						![](https://forkata.github.io/http2/images/binary_framing.svg)
 					</script>
 				</section>
 
@@ -233,6 +256,11 @@
 						* either endpoint can interleave frames from muliple streams
 						* the order of the frames however is significant as the
 							recipient will process them in the order they are received
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
 						![](https://forkata.github.io/http2/images/shared_connection.svg)
 					</script>
 				</section>
@@ -244,17 +272,25 @@
 							a new one is very low (all over single TCP connection)
 						* each stream also has a priority
 						* streams can be dependent on other streams
-						* priorites can be changed in runtime
-							* for example scrolling down a page browser can specify which images are most important
+						* priorites can be changed at runtime
+							* while scrolling down a page the browser can specify which images are more important
 					</script>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
 						## Header compression
-						* HTTP is stateless, so we send a lot of data in headers
+						* HTTP is stateless, so we send a lot of data in headers (cookies, etc.)
 						* HTTP/2 doesn't change that but adds compression
 						* HPACK - Header Compression for HTTP/2
+						* all header field names are lowercase, and the request line is now split into individual
+						_:method, :scheme, :authority, and :path_ pseudo-header fields.
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						![](https://forkata.github.io/http2/images/header_compression.svg)
 					</script>
 				</section>
 
@@ -263,6 +299,19 @@
 						## Server push
 						* client requests X server sents X and Z
 						* client puts Z in cache (client must explicitly allow that)
+						![](https://forkata.github.io/http2/images/server_push.svg)
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Server push
+						Some benefits over inlining resources
+						*	cached by the client
+						*	reused across different pages
+						*	multiplexed alongside other resources
+						*	prioritized by the server
+						*	declined by the client
 					</script>
 				</section>
 
@@ -272,16 +321,34 @@
 						* connections will be much lengthier
 						* client might be able to do everything over a single connection
 						* load balancers need a way to pass on clients to another service
-							* Alt-Svc: header
+							* alt-svc: header
 							* client connects async to that and uses it if it works
 					</script>
 				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## How can we take advantage of HTTP/2 now?
+						* move assets to a HTTP/2 enabled CDN
+						* use an HTTP/2 enabled proxy (nginx, h2o)
+							* no server push or multiplexing
+					</script>
+				</section>
+
+
+				<section data-markdown>
+					<script type="text/template">
+						## Can I use?
+						![](https://forkata.github.io/http2/images/can_i_use.png)
+					</script>
+				</section>
+
 				<section data-markdown>
 					<script type="text/template">
 						## Conclusion
 						* reduces the number of round-trips
 						* avoids HOL with multiplexing
-						* a lot of the workarounds we do like spriting adn inlining won't be needed
+						* a lot of the workarounds we do like spriting and inlining won't be needed
 						* sharding will be detrimental
 						* we'll need to develop for both http/1.x and http/2
 						* still doesn't solve some problems like common headers/cookies/auth headers
@@ -290,8 +357,14 @@
 				</section>
 				<section data-markdown>
 					<script type="text/template">
-						## Resources
-						High Performance Browser Networking - Chapter 12 (https://hpbn.co/http2/)
+						## References
+						High Performance Browser Networking - Chapter 12
+
+						https://hpbn.co/http2/
+
+						HTTP/2 FAQ
+
+						https://http2.github.io/faq/
 					</script>
 				</section>
 
