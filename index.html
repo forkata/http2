@@ -180,10 +180,9 @@
 					<script type="text/template">
 						## URI schemes
 						* existing used for HTTP/1.x so we need a way to upgrade
-						* HTTP/1.1 defined a way 'Upgrade' header in response from server
+						* HTTP/1.1 defined a way `Upgrade` header in response from server
 						* cost of that is a round trip though
-						* SPDY didn't accept that and since it was only over TLS,
-							they added an extension to TLS called NPN replaced by APLN
+						* they added an extension to TLS called NPN, later replaced by APLN
 							* basically client tells the server list of protocols in order of preference
 					</script>
 				</section>
@@ -274,7 +273,7 @@
 						* HTTP/2 doesn't change that but adds compression
 						* HPACK - Header Compression for HTTP/2
 						* all header field names are lowercase, and the request line is now split into individual
-						_:method, :scheme, :authority, and :path_ pseudo-header fields.
+						_:method, :scheme, :host, and :path_ pseudo-header fields.
 					</script>
 				</section>
 
@@ -286,7 +285,7 @@
 				<section data-markdown>
 					<script type="text/template">
 						## Server push
-						* client requests X server sents X and Z
+						* client requests X server sents X, Y and Z
 						* client puts Z in cache (client must explicitly allow that)
 						![](https://forkata.github.io/http2/images/server_push.svg)
 					</script>
