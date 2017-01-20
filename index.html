@@ -51,7 +51,7 @@
 						<script type="text/template">
 							### Protocol is massive and a bit dated
 							* RFC for HTTP/0.9 (1991)
-							* RFC for HTTP/1.0 (1995) 60 pages
+							* RFC for HTTP/1.0 (1995) 60 pages (added PUT, DELETE, LINK, UNLINK)
 							* RFC for HTTP/1.1 (1997) grew to 176 pages
 								* optional parts causing interoperability problems
 						</script>
@@ -79,7 +79,6 @@
 						<script type="text/template">
 							#### Head of line (HOL) blocking
 							* responses have to be returned in the same order (FIFO)
-							* HTTP/1.1 limits server requests to 2 (limit removed, today 6-8 per host)
 							* HTTP pipelining is not turned on for most clients
 							* large or slow response can still block others behind it
 						</script>
@@ -88,6 +87,15 @@
 					<section data-background-color="#fff" data-markdown>
 						<script type="text/template">
 							![](https://forkata.github.io/http2/images/pipelining2.png)
+						</script>
+					</section>
+
+					<section data-markdown>
+						<script type="text/template">
+							#### Max connections per hostname
+							* HTTP/1.1 limits server requests to 2 (most browsers ignore and make 6-8 per host)
+							* not unusual to use up to 100 connections for a single page
+							* top 300K sites use 38 TCP connections
 						</script>
 					</section>
 
@@ -138,8 +146,6 @@
 						<script type="text/template">
 							### Sharding
 							* new hostnames _{shard1, shardn}.example.com_
-							* not unusual to use up to 100 connections for a single page
-							* top 300K sites use 38 TCP connections
 							* different hostnames mean extra DNS lookups, no cookies, a lot of smaller HTTP requests
 						</script>
 					</section>
@@ -177,8 +183,8 @@
 						* HTTP/1.1 defined a way 'Upgrade' header in response from server
 						* cost of that is a round trip though
 						* SPDY didn't accept that and since it was only over TLS,
-							they added an extension to TLS called NPN (Next Protocol Negotiation), later replaced by APLN
-							* client tells the server list of protocols in order of preference
+							they added an extension to TLS called NPN replaced by APLN
+							* basically client tells the server list of protocols in order of preference
 					</script>
 				</section>
 
@@ -191,6 +197,8 @@
 							Upgrade: h2c
 							HTTP2-Settings: (SETTINGS payload)
 						```
+
+						#### server responds
 
 						```
 							HTTP/1.1 200 OK
@@ -270,9 +278,8 @@
 					</script>
 				</section>
 
-				<section data-markdown>
+				<section data-background-color="#fff" data-markdown data-background-image="https://forkata.github.io/http2/images/header_compression.svg" data-background-size="800px">
 					<script type="text/template">
-						![](https://forkata.github.io/http2/images/header_compression.svg)
 					</script>
 				</section>
 
@@ -282,18 +289,6 @@
 						* client requests X server sents X and Z
 						* client puts Z in cache (client must explicitly allow that)
 						![](https://forkata.github.io/http2/images/server_push.svg)
-					</script>
-				</section>
-
-				<section data-markdown>
-					<script type="text/template">
-						## Server push
-						Some benefits over inlining resources
-						*	cached by the client
-						*	reused across different pages
-						*	multiplexed alongside other resources
-						*	prioritized by the server
-						*	declined by the client
 					</script>
 				</section>
 
@@ -332,7 +327,7 @@
 						## Conclusion
 						* reduces the number of round-trips
 						* avoids HOL with multiplexing
-						* a lot of the workarounds we do like spriting and inlining won't be needed
+						* a lot of the workarounds we do now won't be needed
 						* sharding will be detrimental
 						* we'll need to develop for both HTTP/1.x and HTTP/2
 						* mostly useful for browsers to start
