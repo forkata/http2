@@ -34,9 +34,10 @@
 
 				<section data-markdown>
 					<script type="text/template">
+						# Outline
 						1. what's wrong with HTTP/1.1
-						2. overcoming some of the inadequacies
-						3. what could a better HTTP be
+						2. how we've overcome some of the problems
+						3. a better HTTP?
 					</script>
 				</section>
 
@@ -49,9 +50,9 @@
 					<section data-markdown>
 						<script type="text/template">
 							### Protocol is massive and a bit dated
-							* RFC for http/0.9 (1991)
-							* RFC for http/1.0 (1995) 60 pages
-							* RFC for http/1.1 (1997) grew to 176 pages
+							* RFC for HTTP/0.9 (1991)
+							* RFC for HTTP/1.0 (1995) 60 pages
+							* RFC for HTTP/1.1 (1997) grew to 176 pages
 								* optional parts causing interoperability problems
 						</script>
 					</section>
@@ -101,7 +102,7 @@
 				<section>
 					<section data-markdown>
 						<script type="text/template">
-							## Overcoming some of the inadequacies
+							## Overcoming some of the problems
 						</script>
 					</section>
 					<section data-markdown>
@@ -172,32 +173,12 @@
 				<section data-markdown>
 					<script type="text/template">
 						## URI schemes
-						* existing used for http/1.x so we need a way to upgrade
+						* existing used for HTTP/1.x so we need a way to upgrade
 						* HTTP/1.1 defined a way 'Upgrade' header in response from server
 						* cost of that is a round trip though
 						* SPDY didn't accept that and since it was only over TLS,
-							they added an extension to TLS called NPN (Next Protocol Negotiation)
-							* server tells the client which protocols it knows and the client chooses what to use
-					</script>
-				</section>
-
-				<section data-markdown>
-					<script type="text/template">
-						## HTTP/2 over https
-						* SPDY is only over TLS
-						* HTTP/2 supports plain text (h2c) but Mozilla and Chrome support only TLS
-						* NPN was not a standard so ALPN came about (Application Layer Protocol Negotiation)
-							* client tells the server list of protocols in order of precedence
-							* most servers/clients implement both NPN and ALPN
-					</script>
-				</section>
-
-				<section data-markdown>
-					<script type="text/template">
-						## HTTP/2 over http
-						* client sends `Upgrade` header
-						* server responds with `101 Switching` status
-						* still a round trip loss
+							they added an extension to TLS called NPN (Next Protocol Negotiation), later replaced by APLN
+							* client tells the server list of protocols in order of preference
 					</script>
 				</section>
 
@@ -230,12 +211,6 @@
 							(... HTTP/2 response ...)
 
 						```
-					</script>
-				</section>
-
-				<section data-markdown>
-					<script type="text/template">
-						## So whats actually new?
 					</script>
 				</section>
 
@@ -339,7 +314,8 @@
 						* move assets to a HTTP/2 enabled CDN
 						* use an HTTP/2 enabled proxy (nginx, h2o)
 							* no server push or multiplexing
-						* hope Rack implements HTTP/2 (call @tenderlove)
+						* as far as Rails goes
+							* hope Rack implements HTTP/2
 					</script>
 				</section>
 
@@ -362,6 +338,7 @@
 						* mostly useful for browsers to start
 					</script>
 				</section>
+
 				<section data-markdown>
 					<script type="text/template">
 						## References
