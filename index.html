@@ -40,9 +40,10 @@
 					</section>
 					<section data-markdown>
 						<script type="text/template">
-							### Protocol is massive
-							* RFC for http/1.0 was 60 pages
-							* RFC for http/1.1 grew to 176 pages
+							### Protocol is massive and a bit dated
+							* RFC for http/0.9 (1991)
+							* RFC for http/1.0 (1995) 60 pages
+							* RFC for http/1.1 (1997) grew to 176 pages
 								* optional parts causing interoperability problems
 						</script>
 					</section>
@@ -74,6 +75,7 @@
 					</section>
 					<section data-markdown>
 						<script type="text/template">
+							![](https://forkata.github.io/http2/images/gophertiles.png)
 							[http2.golang.org/gophertiles](http://http2.golang.org/gophertiles)
 						</script>
 					</section>
@@ -176,6 +178,38 @@
 
 				<section data-markdown>
 					<script type="text/template">
+						```
+							GET /page HTTP/1.1
+							Host: server.example.com
+							Connection: Upgrade, HTTP2-Settings
+							Upgrade: h2c
+							HTTP2-Settings: (SETTINGS payload)
+						```
+
+						```
+							HTTP/1.1 200 OK
+							Content-length: 243
+							Content-type: text/html
+
+							(... HTTP/1.1 response ...)
+						```
+
+						#### or
+
+
+						```
+							HTTP/1.1 101 Switching Protocols
+							Connection: Upgrade
+							Upgrade: h2c
+
+							(... HTTP/2 response ...)
+
+						```
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
 						## So whats new?
 					</script>
 				</section>
@@ -187,7 +221,7 @@
 						* also TLS already diminishes the value of text
 						* HTTP/2 sends binary frames
 							* all have type, length, flags and a stream identifyer
-						<< insert image here >>
+						!()[https://forkata.github.io/http2/images/binary_framing.svg]
 					</script>
 				</section>
 
@@ -199,8 +233,15 @@
 						* either endpoint can interleave frames from muliple streams
 						* the order of the frames however is significant as the
 							recipient will process them in the order they are received
+						![](https://forkata.github.io/http2/images/shared_connection.svg)
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Multiplexed streams
 						* in HTTP/2 you will see 10-100 simultaneous streams and the cost of
-							a new one is very low
+							a new one is very low (all over single TCP connection)
 						* each stream also has a priority
 						* streams can be dependent on other streams
 						* priorites can be changed in runtime
@@ -247,6 +288,13 @@
 						* mostly useful for browsers to start
 					</script>
 				</section>
+				<section data-markdown>
+					<script type="text/template">
+						## Resources
+						High Performance Browser Networking - Chapter 12 (https://hpbn.co/http2/)
+					</script>
+				</section>
+
 			</div>
 		</div>
 
