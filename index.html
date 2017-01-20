@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>http/2</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section data-markdown>
+					<script type="text/template">
+						# http/2
+
+						### It's coming. Actually, it's here. Kind of.
+					</script>
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							## What's wrong with http/1.1?
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							### Protocol is massive
+							* RFC for http/1.0 was 60 pages
+							* RFC for http/1.1 grew to 176 pages
+								* optional parts causing interoperability problems
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							### Inadequate use of TCP
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							#### Size & Number of objects
+							* size of data has risen (~ 2MB)
+							* number of objects (~100)
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							#### Latency
+							* bandwidth increases
+							* we haven't reduced latency much
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							#### Head of line (HOL) blocking
+							* responses have to be returned in the same order (FIFO)
+							* http pipelining is not turned on for most clients (Opera)
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							[http2.golang.org/gophertiles](http://http2.golang.org/gophertiles)
+						</script>
+					</section>
+				</section>
+
+				<section>
+					<section data-markdown>
+						<script type="text/template">
+							### Overcomming some of the inadequacies
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							### Spriting
+							* always transfer the full file
+							* caching purges all at once vs. letting most common ones remain
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							### Inlining
+							* data urls
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							### Concatenation
+							* the Rails way (application.js/application.css)
+						</script>
+					</section>
+					<section data-markdown>
+						<script type="text/template">
+							### Sharding
+							* HTTP/1.1 limits server requests to 2 (limit removed, today 6-8 per host)
+							* new hostnames
+							* not unusual to use up to 100 connections for a single page
+							* top 300K sites use ~38 tcp connections and raising
+							* different hostnames - no cookies - smaller HTTP requests
+						</script>
+					</section>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## What should a better HTTP be?
+						* less RTT sensitive
+						* fix pipelining and HOL blocking
+						* don't encourage increased number of TCP connections
+						* keep existing URI formats
+						* some transition path - HTTP/1.x servers/clients have to be able to proxy
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## SPDY
+						* made by Google
+						* open, but they pretty much wrote and implemented
+						* SPDY/3 became draft 0 of HTTP/2
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## http/2
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## URI schemes
+						* existing used for http/1.x so we need a way to upgrade
+						* HTTP/1.1 defined a way 'Upgrade' header in response from server
+						* cost of that is a round trip though
+						* SPDY didn't accept that and since it was only over TLS,
+							they added an extension to TLS called NPN (next protocol negotiation)
+							* server tells the client which protocols it knows and the client chooses
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## HTTP/2 for https
+						* SPDY is only over TLS
+						* HTTP/2 supports plain text but Mozilla and Chrome will support only TLS
+						* NPN was not a standard so ALPN came about (Application Layer Protocol Negotiation)
+							* client tells the server list of protocols in order of precedence
+							* most servers/clients implement both
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## HTTP/2 for http
+						* client sends `Upgrade` header
+						* server responds with `101 Switching` status
+						* still a round trip loss
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## So whats new?
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Binary!
+						* makes framing much easier - no optional white spaces!
+						* also TLS already diminishes the value of text
+						* HTTP/2 sends binary frames
+							* all have type, length, flags and a stream identifyer
+						<< insert image here >>
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Multiplexed streams
+						* each frame sent over HTTP/2 is accociated with a 'stream'
+						* a single connection can have multiple concurrently open streams
+						* either endpoint can interleave frames from muliple streams
+						* the order of the frames however is significant as the
+							recipient will process them in the order they are received
+						* in HTTP/2 you will see 10-100 simultaneous streams and the cost of
+							a new one is very low
+						* each stream also has a priority
+						* streams can be dependent on other streams
+						* priorites can be changed in runtime
+							* for example scrolling down a page browser can specify which images are most important
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Header compression
+						* HTTP is stateless, so we send a lot of data in headers
+						* HTTP/2 doesn't change that but adds compression
+						* HPACK - Header Compression for HTTP/2
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Server push
+						* client requests X server sents X and Z
+						* client puts Z in cache (client must explicitly allow that)
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Considerations
+						* connections will be much lengthier
+						* client might be able to do everything over a single connection
+						* load balancers need a way to pass on clients to another service
+							* Alt-Svc: header
+							* client connects async to that and uses it if it works
+					</script>
+				</section>
+				<section data-markdown>
+					<script type="text/template">
+						## Conclusion
+						* reduces the number of round-trips
+						* avoids HOL with multiplexing
+						* a lot of the workarounds we do like spriting adn inlining won't be needed
+						* sharding will be detrimental
+						* we'll need to develop for both http/1.x and http/2
+						* still doesn't solve some problems like common headers/cookies/auth headers
+						* mostly useful for browsers to start
+					</script>
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				history: true,
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
