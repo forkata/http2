@@ -257,10 +257,8 @@
 					</script>
 				</section>
 
-				<section data-markdown>
-					<script type="text/template">
-						![](images/steams_messages_frames.svg)
-					</script>
+				<section data-markdown data-background-color="#fff" data-background-image="images/steams_messages_frames.svg" data-background-size="900px">
+					<script type="text/template"></script>
 				</section>
 
 				<section data-markdown>
@@ -288,8 +286,6 @@
 				<section data-markdown>
 					<script type="text/template">
 						## Multiplexed streams
-						* in HTTP/2 you will see 10-100 simultaneous streams and the cost of
-							a new one is very low (all over single TCP connection)
 						* each stream has a priority
 						* streams can be dependent on other streams
 						* the dependency and priority allows clients to express how they would prefer to receive resources
@@ -347,7 +343,7 @@
 						* connections will be much lengthier
 						* client might be able to do everything over a single connection
 						* load balancers need a way to pass on clients to another service
-							* alt-svc: header - client connects async to that and uses it if it works
+							* `alt-svc` header - client connects async to that and uses it if it works
 					</script>
 				</section>
 
@@ -372,17 +368,19 @@
 				<section data-markdown>
 					<script type="text/template">
 						## HTTP/2 and Rails
-						* the hope was that Rack 2 implements HTTP/2
-						* request and response streaming should be the default
-						* connections to backend servers should be persistent
-						* communication should be message oriented
-						* communication should be bi-directional
+						&#10003; request and response streaming should be the default
+
+						&#10003; connections to backend servers should be persistent
+
+						&#10060; communication should be message oriented
+
+						&#10060;  communication should be bi-directional
 					</script>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
-						## How can we take advantage of this now?
+						## How can we benefit from this now?
 						* move assets to a HTTP/2 enabled CDN
 						* use an HTTP/2 enabled proxy (nginx, h2o) infront of application servers
 							* no server push or multiplexing
@@ -402,7 +400,7 @@
 						* reduces the number of round-trips
 						* avoids HOL blocking with multiplexing
 						* a lot of the workarounds we do now won't be needed
-						* sharding will be detrimental
+						* concatenation, spriting, sharding will be detrimental
 						* we'll need to develop for both HTTP/1.x and HTTP/2
 						* mostly useful for browsers to start
 					</script>
