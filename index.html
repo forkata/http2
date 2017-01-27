@@ -274,12 +274,6 @@
 				<section data-markdown>
 					<script type="text/template">
 						![](images/shared_connection.svg)
-
-						"This ability to break down an HTTP message into independent frames,
-						interleave them, and then reassemble them on the other end is probably 
-						single most important enhancement of HTTP/2."
-
-						*- Ilya Grigorik (Internet plumber @ Google)*
 	 				</script>
 				</section>
 
@@ -389,10 +383,9 @@
 						## Conclusion
 						* reduces the number of round-trips
 						* avoids HOL blocking with multiplexing
-						* a lot of the workarounds we do now won't be needed
-						* concatenation, spriting, sharding will be detrimental
+						* workarounds we do now won't be needed
+							* concatenation, spriting, sharding will be detrimental
 						* we'll need to develop for both HTTP/1.x and HTTP/2
-						* mostly useful for browsers to start
 					</script>
 				</section>
 
