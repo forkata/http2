@@ -239,8 +239,33 @@
 
 				<section data-markdown>
 					<script type="text/template">
+						## http/2 part/2
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Streams, Messages and Frames
+						* *Stream* - a bi-directional flow of bytes withing a connection,
+						which may carry one or more messages
+
+						* *Message* - a sequence of frames that make up a logical HTTP message,
+						such a as a request or a response
+
+						* *Frame* - the smallest unit of communication that carries a type of data,
+						such as headers or payload
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						![](https://forkata.github.io/http2/images/steams_messages_frames.svg)
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
 						## Multiplexed streams
-						* each frame sent over HTTP/2 is accociated with a 'stream'
 						* a single connection can have multiple concurrently open streams
 						* either endpoint can interleave frames from muliple streams
 						* the order of the frames however is significant as the
@@ -251,7 +276,13 @@
 				<section data-markdown>
 					<script type="text/template">
 						![](https://forkata.github.io/http2/images/shared_connection.svg)
-					</script>
+
+						"This ability to break down an HTTP message into independent frames,
+						interleave them, and then reassemble them on the other end is probably 
+						single most important enhancement of HTTP/2."
+
+						*- Ilya Grigorik (Internet plumber @ Google)*
+	 				</script>
 				</section>
 
 				<section data-markdown>
@@ -259,27 +290,36 @@
 						## Multiplexed streams
 						* in HTTP/2 you will see 10-100 simultaneous streams and the cost of
 							a new one is very low (all over single TCP connection)
-						* each stream also has a priority
+						* each stream has a priority
 						* streams can be dependent on other streams
+						* the dependency and priority allows clients to express how they would prefer to receive resources
+							* html, css, javascript, fonts, images
 						* priorites can be changed at runtime
-							* while scrolling down a page the browser can specify which images are more important
 					</script>
 				</section>
 
 				<section data-markdown>
 					<script type="text/template">
-						## Header compression
+						## Headers
 						* HTTP is stateless, so we send a lot of data in headers (cookies, etc.)
 						* HTTP/2 doesn't change that but adds compression
 						* HPACK - Header Compression for HTTP/2
 						* all header field names are lowercase, and the request line is now split into individual
-						_:method, :scheme, :host, and :path_ pseudo-header fields.
+						`:method`, `:scheme`, `:host`, and `:path` pseudo-header fields.
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## HPACK
+						* header fields are encoded via a static Huffman code to reduce size
+						* client and server maintain and update an indexed list of previously seen header fields,
+							which allows more efficient encoding
 					</script>
 				</section>
 
 				<section data-background-color="#fff" data-markdown data-background-image="https://forkata.github.io/http2/images/header_compression.svg" data-background-size="800px">
-					<script type="text/template">
-					</script>
+					<script type="text/template"></script>
 				</section>
 
 				<section data-markdown>
@@ -293,12 +333,50 @@
 
 				<section data-markdown>
 					<script type="text/template">
+						## Server push
+						* resources can be cached by the client
+						* resources can be reused across different pages
+						* resources can be prioritized by the server
+						* resources can be declined by the client
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
 						## Considerations
 						* connections will be much lengthier
 						* client might be able to do everything over a single connection
 						* load balancers need a way to pass on clients to another service
-							* alt-svc: header
-							* client connects async to that and uses it if it works
+							* alt-svc: header - client connects async to that and uses it if it works
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## HTTP/2 and WebSockets
+						* WebSocket is an independent TCP-based protocol from HTTP
+						* it provides a full-duplex communication over a single connection
+						* WebSockets are still better for real-time data transfer, because
+						of less overhead (headers)
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						![](https://forkata.github.io/http2/images/aaron.jpg)
+
+						Hello, Aaron? Uhm, can you make Rack compatible with http/2?
+					</script>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## HTTP/2 and Rails
+						* the hope was that Rack 2 implements HTTP/2
+						* request and response streaming should be the default
+						* connections to backend servers should be persistent
+						* communication should be message oriented
+						* communication should be bi-directional
 					</script>
 				</section>
 
@@ -306,13 +384,10 @@
 					<script type="text/template">
 						## How can we take advantage of this now?
 						* move assets to a HTTP/2 enabled CDN
-						* use an HTTP/2 enabled proxy (nginx, h2o)
+						* use an HTTP/2 enabled proxy (nginx, h2o) infront of application servers
 							* no server push or multiplexing
-						* as far as Rails goes
-							* hope Rack implements HTTP/2
 					</script>
 				</section>
-
 
 				<section data-markdown>
 					<script type="text/template">
@@ -325,7 +400,7 @@
 					<script type="text/template">
 						## Conclusion
 						* reduces the number of round-trips
-						* avoids HOL with multiplexing
+						* avoids HOL blocking with multiplexing
 						* a lot of the workarounds we do now won't be needed
 						* sharding will be detrimental
 						* we'll need to develop for both HTTP/1.x and HTTP/2
