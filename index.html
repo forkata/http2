@@ -8,9 +8,13 @@
 
     <link rel="stylesheet" href="css/reveal.css">
     <link rel="stylesheet" href="css/theme/solarized.css">
+    <link rel="stylesheet" href="css/emoji.css">
 
     <!-- Theme used for syntax highlighting of code -->
     <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Tweetmoji -->
+    <script src="//twemoji.maxcdn.com/twemoji.min.js"></script>
 
     <!-- Printing and PDF exports -->
     <script>
@@ -26,7 +30,7 @@
       <div class="slides">
         <section  data-markdown>
           <script type="text/template">
-            # Homebrewing 101
+            # Homebrewing 101 🍻
           </script>
         </section>
       </div>
@@ -48,6 +52,11 @@
           { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
         ]
       });
+
+      window.onload = function() {
+        twemoji.size = '72x72';
+        twemoji.parse(document.body);
+      }
     </script>
   </body>
 </html>
