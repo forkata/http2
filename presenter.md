@@ -10,13 +10,13 @@ Most of the things I'll talk about today are specific brewing ales, but theapply
 * I had a friend lend me some equipment when they moved and that pretty much got me started.
 
 # Basic ingredients
-malt
-hops - so many varieties
-yeast - based on style specific strains
-water - basically 95% of what beer is
+* grain - cereal grains usually barley
+* hops - so many varieties
+* yeast - based on style specific strains
+* water - basically 95% of what beer is
 
-## Grain or malt
-Malt is germinated cereal grains that have been dried in a process known as "malting".
+## Grain
+Germinated cereal grains that have been dried in a process known as "malting".
 
 The grains are made to germinate by soaking in water, and are then halted from germinating further by drying with hot air.
 
@@ -26,8 +26,11 @@ The color of the grains directly affects the color of the beer you get.
 
 ## Hops
 Bitterness – this balances the sweetness of the malt.
+
 Flavor – Besides bitterness hops add floral, citrus and herbal flavors and aroma.
+
 Head Retention – Hops aid in head retention i.e how long the head of beer lasts after being poured into a glass.
+
 Antibiotic Effect – helps promote the brewer’s yeast instead of other unfavorable microorganisms.
 
 ## Yeast
@@ -48,6 +51,7 @@ For example hard water is better suited for making stouts, whereas softer water 
 
 # What's cooking?
 Brewing beer at home is a lot like cooking, except it takes a lot longer and the clean-up is even less fun.
+
 The results however are usually quite satisfying.
 
 ## Brewing with Malt Extract
