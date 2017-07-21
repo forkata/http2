@@ -1,49 +1,264 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+    <title>reveal.js</title>
 
-		<link rel="stylesheet" href="css/reveal.css">
-		<link rel="stylesheet" href="css/theme/black.css">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/night.css">
 
-		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="lib/css/zenburn.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+		<style>
+      code { width: 100% }
+		</style>
 
-		<!-- Printing and PDF exports -->
-		<script>
-			var link = document.createElement( 'link' );
-			link.rel = 'stylesheet';
-			link.type = 'text/css';
-			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
-			document.getElementsByTagName( 'head' )[0].appendChild( link );
-		</script>
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+    <!-- Printing and PDF exports -->
+    <script>
+var link = document.createElement( 'link' );
+link.rel = 'stylesheet';
+link.type = 'text/css';
+link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-markdown data-separator="^\n---\n$" data-separator-vertical="^\n--\n$" data-separator-notes="^Notes:">
+          <script type="text/template">
+						## Tracking down a bug in production
+						_(How I found and fixed some bad code I wrote)_
 
-		<script src="lib/js/head.min.js"></script>
-		<script src="js/reveal.js"></script>
+						---
 
-		<script>
-			// More info about config & dependencies:
-			// - https://github.com/hakimel/reveal.js#configuration
-			// - https://github.com/hakimel/reveal.js#dependencies
-			Reveal.initialize({
-				dependencies: [
-					{ src: 'plugin/markdown/marked.js' },
-					{ src: 'plugin/markdown/markdown.js' },
-					{ src: 'plugin/notes/notes.js', async: true },
-					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
-				]
-			});
-		</script>
-	</body>
+						### The Mystery Unfolds
+						* Pager Duty Alert at 3AM Tuesday morning for ELB Latency
+						* Site was still up there was no down time
+						* Alert was resolved and passed on for further investigation
+
+						Notes:
+
+						Last Tuesday when I came to work I found out that there was an MU Pager Duty alert around 3am the previous night.
+						I checked the alert and it was caused by a spike in ELB latency
+						* our cloudwatch alerts for ELB latency are set to notify PD if the averate latency is over 2.25 sec over 5 minutes
+						* in addition the ELB has a health check that it performs for each instance and expects a 200 response withing 2 seconds 
+						* after three consecutive failed checks with a 15sec timeout inbetween an instance would be taken out of the load balancer
+
+						We occasionally see spikes in traffic that can cause this kind of thing, but this happened at a weird time, so it needed to be investigated.
+
+						---
+
+						### First Steps
+
+						Checked CloudWatch Metrics to get a better idea of what triggered the alarm
+
+						---
+
+
+						#### ELB Production Latency
+						![](http://i.forkata.com/elb-production-latency.png)
+
+						---
+
+						#### Cloudwatch Dashboard
+						<img src="http://i.forkata.com/cloudwatch-dashboard.png" style="width: 55%" />
+
+						Notes:
+
+						Cloudwatch Dashboard is nice to see a number of metrics co-related over a specific time period in one place. I learned that we actually had an instance taken out of the ELB, which probably put more load on the other instances.
+						However this only confirmed the cause for the alarm, but did not give me any indication for what caused it.
+						It was time to look at the server logs and see if I couldn't find anything more useful.
+
+						---
+
+						### Diving Deeper
+
+						Transfer logs from servers
+
+						(Yes I know! We _need_ ElasticSearch & Kibana)
+
+						```sh
+omc status production | tr -s ' ' | cut -d ' ' -f 6  > /tmp/boxes
+cat /tmp/boxes | parallel 'ssh -o StrictHostKeyChecking=no \
+ctodorov@{} \
+"sudo cat /srv/www/.../log/production.log" > \
+./logs/{}-production.log' &
+						```
+
+						---
+
+						### Analyze Logs
+
+						* request-log-analyzer
+
+						```sh
+request-log-analyzer --format rails3 \
+  --after "2017-07-18 10:00:00" \
+  --before "2017-07-18 11:00:00" \
+  20170718/*
+						```
+
+						Notes:
+
+						Before doing this I did confirm in GA that there wasn't a crazy spike in traffic at 3AM lol.
+
+						---
+
+						### Some useful info
+
+						--
+
+						![](http://i.forkata.com/log-stats-1.png)
+
+						--
+
+						![](http://i.forkata.com/log-stats-2.png)
+
+						--
+
+						![](http://i.forkata.com/log-stats-3.png)
+
+						--
+
+						![](http://i.forkata.com/log-stats-4.png)
+
+						--
+
+						![](http://i.forkata.com/log-stats-5.png)
+
+						---
+
+						### New Relic
+
+						<img src="http://i.forkata.com/new-relic.png" style="width: 45%" />
+
+						---
+
+						### ElastiCache Metrics
+						<img src="http://i.forkata.com/elasticache-free-memory-before.png" style="width: 75%" />
+
+						Notes:
+						Not a metric we have alerts on or look at often, but in this case was invaluable in tracking down the problem.
+						Since then I've added it to the dashboard and have been keeping an eye on it.
+
+						---
+
+						### Bingo!
+
+						<img src="http://i.forkata.com/elasticache-cache-misses-before.png" style="width: 75%" />
+
+						---
+
+						## The Innocent Looking Code
+
+						--
+
+						![](http://i.forkata.com/code-snip-1.png)
+
+						--
+
+						![](http://i.forkata.com/code-snip-2.png)
+
+						--
+
+						![](http://i.forkata.com/code-snip-3.png)
+
+						--
+
+						## A closer look
+						![](http://i.forkata.com/code-snip-3.png)
+
+						---
+
+						## Quiz Time
+
+						--
+
+						### What happens when you call `return` from a block in Ruby?
+
+						--
+
+						```
+						> def foobar
+						*   Rails.cache.fetch('buz') do
+						*     return 'bar'
+						*   end
+						* end
+						=> :foobar
+
+						> foobar
+						=> "bar"
+
+						> Rails.cache.read('buz')
+						=> nil
+						```
+
+						Notes:
+
+* `return` always returns from the enclosing method in the current context (except w/ lambdas)
+* `break` returns value from block and ends its call. If the block was called by `yield` or `.call`, then `break` breaks from this iterator too
+* `next` returns value from block and ends its call. If your block was called by yield or .call, then next returns value to line where yield was called
+
+						---
+
+						## The Fix
+
+						--
+
+						Remove the caching. It was bad anyways.
+
+						---
+
+						## Life is good
+						![](http://i.forkata.com/elasticache-after.png)
+
+						---
+
+						## What I Learned
+
+						--
+
+						Use the tools you have
+
+						--
+
+						Use caching as a last resort and when you do
+						* choosing good cache keys over `expires_in`
+						* short `expires_in` can be a code smell
+						* use view caching over low-level caching
+
+						--
+
+						Monitor after deploying changes you think may have far reaching impact
+
+						_SpeedCurve, CloudWatch, NewRelic, etc._
+
+						--
+
+						Get a dashboard
+          </script>
+        </section>
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+// More info about config & dependencies:
+// - https://github.com/hakimel/reveal.js#configuration
+// - https://github.com/hakimel/reveal.js#dependencies
+Reveal.initialize({
+  dependencies: [
+    { src: 'plugin/markdown/marked.js' },
+    { src: 'plugin/markdown/markdown.js' },
+    { src: 'plugin/notes/notes.js', async: true },
+    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+  ]
+});
+    </script>
+  </body>
 </html>
